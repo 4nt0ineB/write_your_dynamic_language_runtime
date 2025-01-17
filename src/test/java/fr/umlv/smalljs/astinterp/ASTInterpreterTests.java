@@ -25,11 +25,12 @@ public class ASTInterpreterTests {
     return outStream.toString(UTF_8).replace("\r\n", "\n");
   }
 
-  /*
+
   @Tag("Q2") @Test
   public void helloString() {
     assertEquals("", execute("\"hello\"\n"));
   }
+
 
   @Tag("Q3") @Test
   public void integer3() {
@@ -47,7 +48,6 @@ public class ASTInterpreterTests {
   public void printPrint() {
     assertFalse(execute("print(print)\n").isEmpty());
   }
-
   @Tag("Q6") @Test
   public void printOperations() {
     assertEquals("5\n", execute("print(3 + 2)\n"));
@@ -55,6 +55,7 @@ public class ASTInterpreterTests {
     assertEquals("6\n", execute("print(3 * 2)\n"));
     assertEquals("1\n", execute("print(3 / 2)\n"));
   }
+
 
   @Tag("Q7") @Test
   public void printPrint3() {
@@ -68,6 +69,7 @@ public class ASTInterpreterTests {
             print(a);
             """));
   }
+
   @Tag("Q8") @Test
   public void printSeveralVariables() {
     assertEquals("7\n", execute("""
@@ -168,6 +170,7 @@ public class ASTInterpreterTests {
             }
             """));
   }
+
   @Tag("Q11") @Test
   public void printWithAnIf2() {
     assertEquals("true\n", execute("""
@@ -232,7 +235,7 @@ public class ASTInterpreterTests {
             print(f(7));
             """));
   }
-  
+
   @Tag("Q12") @Test
   public void callFibo() {
     assertEquals("21\n", execute("""
@@ -282,7 +285,7 @@ public class ASTInterpreterTests {
             print(f());
             """));
   }
-  
+
   @Tag("Q13") @Test
   public void createAnObject() {
     assertEquals("""
@@ -300,7 +303,7 @@ public class ASTInterpreterTests {
                 print(o);
                 """));
   }
-  
+
   @Tag("Q14") @Test
   public void createAnObjectFromAVariableValue() {
     assertEquals("""
@@ -330,7 +333,7 @@ public class ASTInterpreterTests {
                 };"""));
   }
   
-  
+
   @Tag("Q15") @Test
   public void objectGetAFieldValue() {
     assertEquals(
@@ -349,7 +352,7 @@ public class ASTInterpreterTests {
                 print(john.foo);
                 """));
   }
-  
+  /*
   @Tag("Q16") @Test
   public void objectSetAFieldValue() {
     assertEquals(

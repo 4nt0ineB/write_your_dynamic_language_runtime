@@ -40,44 +40,74 @@ public final class ASTInterpreter {
       case Block(List<Expr> instrs, int lineNumber) -> {
 				//throw new UnsupportedOperationException("TODO Block");
         // TODO loop over all instructions
+        for (var expr: instrs) {
+          visit(expr, env);
+        }
         yield UNDEFINED;
       }
       case Literal<?>(Object value, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO Literal");
+        yield value;
       }
       case FunCall(Expr qualifier, List<Expr> args, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO FunCall");
+        var value = visit(qualifier, env);
+        if(!(value instanceof JSObject jsObject)) {
+          throw new Failure("Not a function at line " + lineNumber);
+        }
+        var values = args.stream().map(expr -> visit(expr, env)).toArray();
+        yield jsObject.invoke(UNDEFINED,values);
       }
       case LocalVarAccess(String name, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO LocalVarAccess");
+        yield env.lookup(name);
       }
       case LocalVarAssignment(String name, Expr expr, boolean declaration, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO LocalVarAssignment");
+        if(declaration && env.lookup(name) != UNDEFINED) {
+          throw new Failure("variable \"" + name + "\" is already defined at line " + lineNumber);
+        }
+        var value = visit(expr, env);
+        env.register(name, value);
+        yield value;
       }
       case Fun(Optional<String> optName, List<String> parameters, Block body, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO Fun");
-        //var functionName = optName.orElse("lambda");
-        //Invoker invoker = new Invoker() {
-        //  @Override
-        //  public Object invoke(JSObject self, Object receiver, Object... args) {
-        //    // check the arguments length
-        //    // create a new environment
-        //    // add this and all the parameters
-        //    // visit the body
-        //  }
-        //};
-        // create the JS function with the invoker
-        // register it if necessary
-        // yield the function
+				//throw new UnsupportedOperationException("TODO Fun");
+        var functionName = optName.orElse("lambda");
+        var invoker = new JSObject.Invoker() {
+          @Override
+          public Object invoke(Object receiver, Object... args) {
+            if(args.length != parameters.size()) {
+              throw new Failure("wrong number of arguments");
+            }
+            var localEnv = JSObject.newEnv(env);
+            localEnv.register("this", receiver);
+            for(var i = 0; i < parameters.size(); i++) {
+              localEnv.register(parameters.get(i), args[i]);
+            }
+            try {
+              return visit(body, localEnv);
+            } catch (ReturnError re) {
+              return re.getValue();
+            }
+          }
+        };
+        var function = JSObject.newFunction(functionName, invoker);
+          optName.ifPresent(name -> env.register(name, function));
+        yield function;
       }
       case Return(Expr expr, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO Return");
+        throw new ReturnError(visit(expr, env));
       }
       case If(Expr condition, Block trueBlock, Block falseBlock, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO If");
+        var value = visit(condition, env);
+        if(value instanceof Integer v && v == 1) {
+          visit(trueBlock, env);
+        } else {
+          visit(falseBlock, env);
+        }
+        yield UNDEFINED;
       }
       case New(Map<String, Expr> initMap, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO New");
+        var object = JSObject.newObject(null);
+        initMap.forEach(object::register);
+        yield object;
       }
       case FieldAccess(Expr receiver, String name, int lineNumber) -> {
         throw new UnsupportedOperationException("TODO FieldAccess");
@@ -115,7 +145,7 @@ public final class ASTInterpreter {
   }
 
   public static void interpret(Script script, PrintStream outStream) {
-    JSObject globalEnv =createGlobalEnv(outStream);
+    JSObject globalEnv = createGlobalEnv(outStream);
     Block body = script.body();
     visit(body, globalEnv);
   }
