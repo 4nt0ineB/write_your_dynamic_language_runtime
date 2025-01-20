@@ -81,6 +81,7 @@ public final class ASTInterpreter {
             for(var i = 0; i < parameters.size(); i++) {
               localEnv.register(parameters.get(i), args[i]);
             }
+            
             try {
               return visit(body, localEnv);
             } catch (ReturnError re) {
@@ -89,7 +90,7 @@ public final class ASTInterpreter {
           }
         };
         var function = JSObject.newFunction(functionName, invoker);
-          optName.ifPresent(name -> env.register(name, function));
+        optName.ifPresent(name -> env.register(name, function));
         yield function;
       }
       case Return(Expr expr, int lineNumber) -> {
@@ -107,16 +108,40 @@ public final class ASTInterpreter {
       case New(Map<String, Expr> initMap, int lineNumber) -> {
         var object = JSObject.newObject(null);
         initMap.forEach(object::register);
+        for(var entry: initMap.entrySet()) {
+          var value = visit(entry.getValue(), env);
+          object.register(entry.getKey(), value);
+        }
         yield object;
       }
       case FieldAccess(Expr receiver, String name, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO FieldAccess");
+        var value = visit(receiver, env);
+        if(!(value instanceof JSObject jsObject)) {
+          throw new Failure("Not an field at line " + lineNumber);
+        }
+        yield jsObject.lookup(name);
       }
       case FieldAssignment(Expr receiver, String name, Expr expr, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO FieldAssignment");
+        var value = visit(expr, env);
+        var field = visit(receiver, env);
+        if(!(field instanceof JSObject jsObject)) {
+          throw new Failure("Not an field at line " + lineNumber);
+        }
+        jsObject.register(name, value);
+        yield value;
       }
       case MethodCall(Expr receiver, String name, List<Expr> args, int lineNumber) -> {
-        throw new UnsupportedOperationException("TODO MethodCall");
+        var object = visit(receiver, env);
+        if(!(object instanceof JSObject jsObject)) {
+          throw new Failure("Not an object at line " + lineNumber);
+        }
+        var method = (Expr.Fun) jsObject.lookup(name);
+        var func = (JSObject) visit(method, env);
+        
+        var reifiedArgs = args.stream()
+                             .map(arg -> visit(arg, env))
+                             .toArray();
+        yield func.invoke(receiver, reifiedArgs);
       }
     };
   }
@@ -150,4 +175,3 @@ public final class ASTInterpreter {
     visit(body, globalEnv);
   }
 }
-
