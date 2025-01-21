@@ -321,13 +321,13 @@ public class StackInterpreterInstrTests {
   			LOOKUP, encodeDictObject("foo", dict),
   			CONST, encodeDictObject(UNDEFINED, dict),
   			CONST, encodeSmallInt(2),
-  			FUNCALL, 1,
+			FUNCALL, 1,
     		PRINT,
     		RET
   	};
   	assertEquals("3\n", execute(new Code(main, 1, 1), dict));
   }
-	/*
+
   @Tag("Q10") @Test
   public void callAUserDefinedFunctionWithTheWrongNumberOfArguments() {
   	// function foo(a, b) {
@@ -482,7 +482,7 @@ public class StackInterpreterInstrTests {
     		RET
   	};
     assertEquals("undefined\n", execute(new Code(main, 1, 1), dict));
-  }*/
+  }
 
 //  @Tag("Q11") @Test
 //  public void printWithAnIf() {

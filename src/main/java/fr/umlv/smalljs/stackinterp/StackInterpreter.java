@@ -100,7 +100,8 @@ public final class StackInterpreter {
 					// get the constant from the instruction to the stack
 					// push(...)
 					push(stack, sp++, instrs[pc++]);
-					// dumpStack(">end const ", stack, sp, bp, dict, heap);
+					System.err.println("1) bp: " + bp + " sp: " + sp + " pc: " + pc);
+					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.LOOKUP -> {
 					//throw new UnsupportedOperationException("TODO LOOKUP");
@@ -111,7 +112,8 @@ public final class StackInterpreter {
 					// lookup the name and push as any anyValue
 					var object = globalEnv.lookup(name);
 					push(stack, sp++, encodeAnyValue(object, dict));
-					//dumpStack("in lookup", stack, sp, bp, dict, heap);
+					System.err.println("2) bp: " + bp + " sp: " + sp + " pc: " + pc);
+					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.REGISTER -> {
 					//throw new UnsupportedOperationException("TODO REGISTER");
@@ -125,6 +127,8 @@ public final class StackInterpreter {
 					Object value = decodeAnyValue(pop(stack, --sp), dict, heap);
 					// register it in the global environment
 					globalEnv.register(name, value);
+					System.err.println("3) bp: " + bp + " sp: " + sp + " pc: " + pc);
+					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.LOAD -> {
 					//throw new UnsupportedOperationException("TODO LOAD");
@@ -134,6 +138,8 @@ public final class StackInterpreter {
 					int value = load(stack, bp, offset);
 					// push it to the top of the stack
 					push(stack, sp++, value);
+					System.err.println("4) bp: " + bp + " sp: " + sp + " pc: " + pc);
+					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.STORE -> {
 					//throw new UnsupportedOperationException("TODO STORE");
@@ -173,7 +179,7 @@ public final class StackInterpreter {
 				case Instructions.FUNCALL -> {
 					//throw new UnsupportedOperationException("TODO FUNCALL");
 					// DEBUG
-					dumpStack(">start funcall", stack, sp, bp, dict, heap);
+					//dumpStack(">start funcall", stack, sp, bp, dict, heap);
 
 					// find argument count
 					var argumentCount = instrs[pc++];
@@ -197,13 +203,13 @@ public final class StackInterpreter {
 						}
 						System.err.println("funcall " + newFunction.getName() + " with " + receiver + " " + Arrays.toString(args));
 					}*/
-					
+
 					// check if the function contains a code attribute
 					var maybeCode = newFunction.lookup("__code__");
 					if (maybeCode == UNDEFINED) { // native call !
 					 	// decode receiver
 						var receiver = decodeAnyValue(stack[baseArg + RECEIVER_BASE_ARG_OFFSET], dict, heap);
-						
+
 					  // decode arguments
 					  var args = new Object[argumentCount];
 					  for (var i = 0; i < argumentCount; i++) {
@@ -221,6 +227,8 @@ public final class StackInterpreter {
 
 					  // push return value
 					  push(stack, sp++, encodeAnyValue(result, dict));
+						System.err.println("5) bp: " + bp + " sp: " + sp + " pc: " + pc);
+						dumpStack(">end const ", stack, sp, bp, dict, heap);
 					  continue;
 					}
 
@@ -238,12 +246,14 @@ public final class StackInterpreter {
 					var activation = funcBaseArg + code.slotCount();
 					stack[activation + BP_OFFSET] = bp;
 					stack[activation + PC_OFFSET] = pc;
-					stack[activation + FUN_OFFSET] = encodeAnyValue(function, dict);
-					
+					stack[activation + FUN_OFFSET] = encodeDictObject(function, dict);
+
+					//System.err.println(">FUNCALL: Stored at FUN_OFFSET: " + decodeAnyValue(stack[activation + FUN_OFFSET], dict, heap));
+
 					// initialize pc, bp and sp
 					pc = 0;
 					bp = funcBaseArg;
-					sp = bp + ACTIVATION_SIZE;
+					sp = activation + ACTIVATION_SIZE;
 					// initialize all locals that are not parameters
 					for (var i = bp + code.parameterCount(); i < bp + code.slotCount(); i++) {
 						stack[i] = undefined;
@@ -252,14 +262,16 @@ public final class StackInterpreter {
 					// initialize function and instrs of the new function
 					function = newFunction;
 					instrs = code.instrs();
-					
+
 					// DEBUG
 					//dumpStack(">end funcall dump", stack, sp, bp, dict, heap);
+					System.err.println("6) bp: " + bp + " sp: " + sp + " pc: " + pc);
+					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.RET -> {
 					//throw new UnsupportedOperationException("TODO RET");
 					// DEBUG
-					dumpStack("> start ret dump", stack, sp, bp, dict, heap);
+					//dumpStack("> start ret dump", stack, sp, bp, dict, heap);
 
 					// get the return value from the top of the stack
 					int result = pop(stack, --sp);
@@ -268,17 +280,23 @@ public final class StackInterpreter {
 
 					// find activation and restore pc
 					int activation = bp + code.slotCount();
-					pc = load(stack, activation, PC_OFFSET);
+					pc = stack[activation + PC_OFFSET];
 					if (pc == 0) { // the end of the program
+						System.err.println("7) bp: " + bp + " sp: " + sp + " pc: " + pc);
+						dumpStack(">end const ", stack, sp, bp, dict, heap);
 						return decodeAnyValue(result, dict, heap);
 					}
-					System.err.println(">FUNCALL: Stored4 at FUN_OFFSET: " + decodeAnyValue(stack[activation + FUN_OFFSET], dict, heap));
+					//System.err.println(">FUNCALL: Stored4 at FUN_OFFSET: " + decodeAnyValue(load(stack, activation, FUN_OFFSET), dict, heap));
 
 					// restore sp, function and bp
 					sp = bp - 1;
-					int funObj = load(stack, activation, FUN_OFFSET);
-					
-					function = (JSObject) decodeAnyValue(funObj, dict, heap);
+					var functionIndex = load(stack, activation, FUN_OFFSET);
+					function = (JSObject) decodeDictObject(functionIndex, dict);
+					bp = load(stack, activation, BP_OFFSET);
+
+//					int funObj = load(stack, activation, FUN_OFFSET);
+//					function = (JSObject) decodeAnyValue(funObj, dict, heap); // Restore the correct function
+					//System.err.println(">RET: Restored from FUN_OFFSET: " + decodeAnyValue(funObj, dict, heap));
 					// restore code and instrs
 					code = (Code) function.lookup("__code__");
 					instrs = code.instrs();
@@ -288,6 +306,8 @@ public final class StackInterpreter {
 
 					// DEBUG
 					// dumpStack("> end ret dump", stack, sp, bp, dict, heap);
+					System.err.println("8) bp: " + bp + " sp: " + sp + " pc: " + pc);
+					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.GOTO -> {
 					throw new UnsupportedOperationException("TODO GOTO");
