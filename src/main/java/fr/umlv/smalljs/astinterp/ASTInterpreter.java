@@ -137,7 +137,6 @@ public final class ASTInterpreter {
         }
         var method = (Expr.Fun) jsObject.lookup(name);
         var func = (JSObject) visit(method, env);
-        
         var reifiedArgs = args.stream()
                              .map(arg -> visit(arg, env))
                              .toArray();

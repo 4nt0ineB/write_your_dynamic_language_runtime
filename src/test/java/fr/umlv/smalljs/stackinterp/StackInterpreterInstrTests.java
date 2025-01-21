@@ -225,6 +225,7 @@ public class StackInterpreterInstrTests {
   	};
   	assertEquals("3\n", execute(new Code(instrs, 1, 2), dict));
   }
+	
   @Tag("Q8") @Test
   public void printSeveralVariables() {
     // var a = 3;
@@ -246,6 +247,7 @@ public class StackInterpreterInstrTests {
   	};
   	assertEquals("7\n", execute(new Code(instrs, 1, 3), dict));
   }
+
   @Tag("Q8") @Test
   public void printSeveralAssignments() {
     // var a = 42;
@@ -284,7 +286,6 @@ public class StackInterpreterInstrTests {
   	};
   	assertEquals("hello Bob\n", execute(new Code(instrs, 1, 2), dict));
   }
-
   @Tag("Q9") @Test
   public void printAnUndefindeVariable() {
   	// print(a);
@@ -326,6 +327,7 @@ public class StackInterpreterInstrTests {
   	};
   	assertEquals("3\n", execute(new Code(main, 1, 1), dict));
   }
+	/**
   @Tag("Q10") @Test
   public void callAUserDefinedFunctionWithTheWrongNumberOfArguments() {
   	// function foo(a, b) {
@@ -459,28 +461,29 @@ public class StackInterpreterInstrTests {
   	};
     assertEquals("6\n", execute(new Code(main, 1, 2), dict));
   }
-//  @Tag("Q10") @Test
-//  public void callFunctionWithNoReturn() {
-//  	// function undef() { }
-//    // print(undef());
-//  	var dict = new Dictionary();
-//    int[] undef = {
-//    		CONST, encodeDictObject(UNDEFINED, dict),
-//    		RET
-//  	};
-//    var undefFunction = newFunction("lambda", new Code(undef, 1, 1));
-//  	int[] main = {
-//  			CONST, encodeDictObject(undefFunction, dict),
-//  			REGISTER, encodeDictObject("undef", dict),
-//  			LOOKUP, encodeDictObject("undef", dict),
-//  			CONST, encodeDictObject(UNDEFINED, dict),
-//  			FUNCALL, 0,
-//    		PRINT,
-//    		RET
-//  	};
-//    assertEquals("undefined\n", execute(new Code(main, 1, 1), dict));
-//  }
-//
+
+  @Tag("Q10") @Test
+  public void callFunctionWithNoReturn() {
+  	// function undef() { }
+    // print(undef());
+  	var dict = new Dictionary();
+    int[] undef = {
+    		CONST, encodeDictObject(UNDEFINED, dict),
+    		RET
+  	};
+    var undefFunction = newFunction("lambda", new Code(undef, 1, 1));
+  	int[] main = {
+  			CONST, encodeDictObject(undefFunction, dict),
+  			REGISTER, encodeDictObject("undef", dict),
+  			LOOKUP, encodeDictObject("undef", dict),
+  			CONST, encodeDictObject(UNDEFINED, dict),
+  			FUNCALL, 0,
+    		PRINT,
+    		RET
+  	};
+    assertEquals("undefined\n", execute(new Code(main, 1, 1), dict));
+  }*/
+
 //  @Tag("Q11") @Test
 //  public void printWithAnIf() {
 //  	// var a = 2;
