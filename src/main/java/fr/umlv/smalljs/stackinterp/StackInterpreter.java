@@ -100,7 +100,8 @@ public final class StackInterpreter {
 					// get the constant from the instruction to the stack
 					// push(...)
 					push(stack, sp++, instrs[pc++]);
-                }
+					// dumpStack(">end const ", stack, sp, bp, dict, heap);
+				}
 				case Instructions.LOOKUP -> {
 					//throw new UnsupportedOperationException("TODO LOOKUP");
 					// find the current instruction
@@ -118,7 +119,7 @@ public final class StackInterpreter {
 					// find the current instruction
 					int indexTagValue = instrs[pc++];
 					// decode the name from the instructions
-					String name = (String) decodeDictObject(indexTagValue, dict);
+					String name = (String) decodeAnyValue(indexTagValue, dict, heap);
 					// pop the value from the stack and decode it
 					//System.err.println("name: " + name);
 					Object value = decodeAnyValue(pop(stack, --sp), dict, heap);
@@ -172,7 +173,7 @@ public final class StackInterpreter {
 				case Instructions.FUNCALL -> {
 					//throw new UnsupportedOperationException("TODO FUNCALL");
 					// DEBUG
-					//dumpStack(">start funcall", stack, sp, bp, dict, heap);
+					dumpStack(">start funcall", stack, sp, bp, dict, heap);
 
 					// find argument count
 					var argumentCount = instrs[pc++];
@@ -185,6 +186,9 @@ public final class StackInterpreter {
 
 					// decode qualifier
 					var newFunction = (JSObject) decodeAnyValue(qualifier, dict, heap);
+					/*if (newFunction == UNDEFINED) {
+						throw new Failure("Cannot call undefined as a function");
+					}*/
 					/*{ // DEBUG
 						var receiver = decodeAnyValue(stack[baseArg + RECEIVER_BASE_ARG_OFFSET], dict, heap);
 						var args = new Object[argumentCount];
@@ -197,9 +201,9 @@ public final class StackInterpreter {
 					// check if the function contains a code attribute
 					var maybeCode = newFunction.lookup("__code__");
 					if (maybeCode == UNDEFINED) { // native call !
-					 	//decode receiver
+					 	// decode receiver
 						var receiver = decodeAnyValue(stack[baseArg + RECEIVER_BASE_ARG_OFFSET], dict, heap);
-
+						
 					  // decode arguments
 					  var args = new Object[argumentCount];
 					  for (var i = 0; i < argumentCount; i++) {
@@ -234,13 +238,12 @@ public final class StackInterpreter {
 					var activation = funcBaseArg + code.slotCount();
 					stack[activation + BP_OFFSET] = bp;
 					stack[activation + PC_OFFSET] = pc;
-					stack[activation + FUN_OFFSET] = encodeDictObject(function, dict);
-
+					stack[activation + FUN_OFFSET] = encodeAnyValue(function, dict);
+					
 					// initialize pc, bp and sp
 					pc = 0;
 					bp = funcBaseArg;
 					sp = bp + ACTIVATION_SIZE;
-					dumpStack(">start funcall new ", stack, sp, bp, dict, heap);
 					// initialize all locals that are not parameters
 					for (var i = bp + code.parameterCount(); i < bp + code.slotCount(); i++) {
 						stack[i] = undefined;
@@ -251,7 +254,7 @@ public final class StackInterpreter {
 					instrs = code.instrs();
 					
 					// DEBUG
-					dumpStack(">end funcall dump", stack, sp, bp, dict, heap);
+					//dumpStack(">end funcall dump", stack, sp, bp, dict, heap);
 				}
 				case Instructions.RET -> {
 					//throw new UnsupportedOperationException("TODO RET");
@@ -269,12 +272,13 @@ public final class StackInterpreter {
 					if (pc == 0) { // the end of the program
 						return decodeAnyValue(result, dict, heap);
 					}
+					System.err.println(">FUNCALL: Stored4 at FUN_OFFSET: " + decodeAnyValue(stack[activation + FUN_OFFSET], dict, heap));
 
 					// restore sp, function and bp
 					sp = bp - 1;
-					function = (JSObject) decodeDictObject(load(stack, activation, FUN_OFFSET), dict);
-					bp = load(stack, activation, BP_OFFSET);
-
+					int funObj = load(stack, activation, FUN_OFFSET);
+					
+					function = (JSObject) decodeAnyValue(funObj, dict, heap);
 					// restore code and instrs
 					code = (Code) function.lookup("__code__");
 					instrs = code.instrs();
