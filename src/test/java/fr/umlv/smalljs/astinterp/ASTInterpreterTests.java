@@ -375,7 +375,7 @@ public class ASTInterpreterTests {
                 print(f(obj));
                 """));
   }
-  /*
+  
   @Tag("Q17") @Test
   public void objectCallAMethod() {
     assertEquals(
@@ -390,5 +390,5 @@ public class ASTInterpreterTests {
                 object.foo(42);
                 object.foo(42);
                 """));
-  }*/
+  }
 }

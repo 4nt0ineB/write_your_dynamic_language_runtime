@@ -132,15 +132,17 @@ public final class ASTInterpreter {
       }
       case MethodCall(Expr receiver, String name, List<Expr> args, int lineNumber) -> {
         var object = visit(receiver, env);
-        if(!(object instanceof JSObject jsObject)) {
+        if (!(object instanceof JSObject jsObject)) {
           throw new Failure("Not an object at line " + lineNumber);
         }
-        var method = (Expr.Fun) jsObject.lookup(name);
-        var func = (JSObject) visit(method, env);
+        var method = jsObject.lookup(name);
+        if (!(method instanceof JSObject func)) {
+          throw new Failure("Method " + name + " is not a function at line " + lineNumber);
+        }
         var reifiedArgs = args.stream()
                              .map(arg -> visit(arg, env))
                              .toArray();
-        yield func.invoke(receiver, reifiedArgs);
+        yield func.invoke(jsObject, reifiedArgs);
       }
     };
   }
