@@ -484,36 +484,36 @@ public class StackInterpreterInstrTests {
     assertEquals("undefined\n", execute(new Code(main, 1, 1), dict));
   }
 
-//  @Tag("Q11") @Test
-//  public void printWithAnIf() {
-//  	// var a = 2;
-//		// if (a == 3) {
-//		//   print("true");
-//		// } else {
-//		//  print("false");
-//		// }
-//  	var dict = new Dictionary();
-//  	int[] main = {
-//  			/* 0*/ CONST, encodeSmallInt(2),
-//  			/* 2*/ STORE, 1,
-//  			/* 4*/ LOOKUP, encodeDictObject("==", dict),
-//  			/* 6*/ CONST, encodeDictObject(UNDEFINED, dict),
-//  			/* 8*/ LOAD, 1,
-//  			/*10*/ CONST, encodeSmallInt(3),
-//  			/*12*/ FUNCALL, 2,
-//  			/*14*/ JUMP_IF_FALSE, 22,
-//  			/*16*/ CONST, encodeDictObject("true", dict),
-//  			/*18*/ PRINT,
-//  			/*19*/ POP,
-//  			/*20*/ GOTO, 26,
-//  			/*22*/ CONST, encodeDictObject("false", dict),
-//  			/*24*/ PRINT,
-//  			/*25*/ POP,
-//  			/*26*/ CONST, encodeDictObject(UNDEFINED, dict),
-//  			/*28*/ RET
-//  	};
-//    assertEquals("false\n", execute(new Code(main, 1, 2), dict));
-//  }
+  @Tag("Q11") @Test
+  public void printWithAnIf() {
+  	// var a = 2;
+		// if (a == 3) {
+		//   print("true");
+		// } else {
+		//  print("false");
+		// }
+  	var dict = new Dictionary();
+  	int[] main = {
+  			/* 0*/ CONST, encodeSmallInt(2),
+  			/* 2*/ STORE, 1,
+  			/* 4*/ LOOKUP, encodeDictObject("==", dict),
+  			/* 6*/ CONST, encodeDictObject(UNDEFINED, dict),
+  			/* 8*/ LOAD, 1,
+  			/*10*/ CONST, encodeSmallInt(3),
+  			/*12*/ FUNCALL, 2,
+  			/*14*/ JUMP_IF_FALSE, 22,
+  			/*16*/ CONST, encodeDictObject("true", dict),
+  			/*18*/ PRINT,
+  			/*19*/ POP,
+  			/*20*/ GOTO, 26,
+  			/*22*/ CONST, encodeDictObject("false", dict),
+  			/*24*/ PRINT,
+  			/*25*/ POP,
+  			/*26*/ CONST, encodeDictObject(UNDEFINED, dict),
+  			/*28*/ RET
+  	};
+    assertEquals("false\n", execute(new Code(main, 1, 2), dict));
+  }
 //  @Tag("Q11") @Test
 //  public void printWithAnIf2() {
 //    // var a = 3;

@@ -157,7 +157,8 @@ public final class StackInterpreter {
 					// get value on top of the stack
 					//var value = ...
 					// push it on top of the stack
-					//push(...);
+					var peek = peek(stack, sp);
+					push(stack, sp++, peek);
 				}
 				case Instructions.POP -> {
 					// adjust the stack pointer
