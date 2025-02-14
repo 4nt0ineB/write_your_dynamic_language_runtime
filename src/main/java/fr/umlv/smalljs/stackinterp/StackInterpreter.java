@@ -78,7 +78,7 @@ public final class StackInterpreter {
 
 	public static Object execute(JSObject function, Dictionary dict, JSObject globalEnv) {
 		var stack = new int[96 /* 4096 */];
-		var heap = new int[4/*96*/ /* 4096 */];
+		var heap = new int[96 /* 4096 */];
 		var code = (Code) function.lookup("__code__");
 		var instrs = code.instrs();
 
@@ -97,16 +97,11 @@ public final class StackInterpreter {
 		for (;;) {
 			switch (instrs[pc++]) {
 				case Instructions.CONST -> {
-					//throw new UnsupportedOperationException("TODO CONST");
 					// get the constant from the instruction to the stack
-					// push(...)
 					int value = instrs[pc++];
 					push(stack, sp++, value);
-					//System.err.println("1) bp: " + bp + " sp: " + sp + " pc: " + pc);
-					//dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.LOOKUP -> {
-					//throw new UnsupportedOperationException("TODO LOOKUP");
 					// find the current instruction
 					int indexTagValue = instrs[pc++];
 					// decode the name from the instruction
@@ -114,12 +109,8 @@ public final class StackInterpreter {
 					// lookup the name and push as any anyValue
 					var object = globalEnv.lookup(name);
 					push(stack, sp++, encodeAnyValue(object, dict));
-//					System.err.println("2) bp: " + bp + " sp: " + sp + " pc: " + pc);
-//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.REGISTER -> {
-					//throw new UnsupportedOperationException("TODO REGISTER");
-					//dumpStack(">start REGISTER ", stack, sp, bp, dict, heap);
 					// find the current instruction
 					int indexTagValue = instrs[pc++];
 					// decode the name from the instructions
@@ -129,45 +120,34 @@ public final class StackInterpreter {
 					Object value = decodeDictObject(pop(stack, --sp), dict);
 					// register it in the global environment
 					globalEnv.register(name, value);
-//					System.err.println("3) bp: " + bp + " sp: " + sp + " pc: " + pc);
-//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.LOAD -> {
-					//throw new UnsupportedOperationException("TODO LOAD");
 					// get local offset
 					int offset = instrs[pc++];
 					// load value from the local slots
 					int value = load(stack, bp, offset);
 					// push it to the top of the stack
 					push(stack, sp++, value);
-//					System.err.println("4) bp: " + bp + " sp: " + sp + " pc: " + pc);
-//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.STORE -> {
-					//throw new UnsupportedOperationException("TODO STORE");
 					// get local offset
-					//dumpStack(">start STORE ", stack, sp, bp, dict, heap);
 					int offset = instrs[pc++];
 					// pop value from the stack
 					var value = pop(stack, --sp);
 					// store it in the local slots
 					store(stack, bp, offset, value);
-					//dumpStack(">end STORE ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.DUP -> {
-					//throw new UnsupportedOperationException("TODO DUP");
 					// get value on top of the stack
-					//var value = ...
+					var value = peek(stack, sp);
 					// push it on top of the stack
-					var peek = peek(stack, sp);
-					push(stack, sp++, peek);
+					push(stack, sp++, value);
 				}
 				case Instructions.POP -> {
 					// adjust the stack pointer
 					--sp;
 				}
 				case Instructions.SWAP -> {
-					// throw new UnsupportedOperationException("TODO SWAP");
 					// pop first value from the stack
 					var value1 = pop(stack, --sp);
 					// pop second value from the stack
@@ -180,7 +160,6 @@ public final class StackInterpreter {
 
 				//sp = bp + slot + activation
 				case Instructions.FUNCALL -> {
-					//throw new UnsupportedOperationException("TODO FUNCALL");
 					// DEBUG
 					//dumpStack(">start funcall", stack, sp, bp, dict, heap);
 
@@ -230,8 +209,6 @@ public final class StackInterpreter {
 
 					  // push return value
 					  push(stack, sp++, encodeAnyValue(result, dict));
-						// System.err.println("5) bp: " + bp + " sp: " + sp + " pc: " + pc);
-						// dumpStack(">end const ", stack, sp, bp, dict, heap);
 					  continue;
 					}
 
@@ -251,8 +228,6 @@ public final class StackInterpreter {
 					stack[activation + PC_OFFSET] = pc;
 					stack[activation + FUN_OFFSET] = encodeDictObject(function, dict);
 
-					//System.err.println(">FUNCALL: Stored at FUN_OFFSET: " + decodeAnyValue(stack[activation + FUN_OFFSET], dict, heap));
-
 					// initialize pc, bp and sp
 					pc = 0;
 					bp = funcBaseArg;
@@ -265,31 +240,17 @@ public final class StackInterpreter {
 					// initialize function and instrs of the new function
 					function = newFunction;
 					instrs = code.instrs();
-
-					// DEBUG
-					//dumpStack(">end funcall dump", stack, sp, bp, dict, heap);
-//					System.err.println("6) bp: " + bp + " sp: " + sp + " pc: " + pc);
-//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.RET -> {
-					//throw new UnsupportedOperationException("TODO RET");
-					// DEBUG
-					//dumpStack("> start ret dump", stack, sp, bp, dict, heap);
-
 					// get the return value from the top of the stack
 					int result = pop(stack, --sp);
-
-					//System.err.println("ret " + decodeAnyValue(result, dict, heap));
 
 					// find activation and restore pc
 					int activation = bp + code.slotCount();
 					pc = stack[activation + PC_OFFSET];
 					if (pc == 0) { // the end of the program
-						//System.err.println("7) bp: " + bp + " sp: " + sp + " pc: " + pc);
-						//dumpStack(">end const ", stack, sp, bp, dict, heap);
 						return decodeAnyValue(result, dict, heap);
 					}
-					//System.err.println(">FUNCALL: Stored4 at FUN_OFFSET: " + decodeAnyValue(load(stack, activation, FUN_OFFSET), dict, heap));
 
 					// restore sp, function and bp
 					sp = bp - 1;
@@ -297,29 +258,19 @@ public final class StackInterpreter {
 					function = (JSObject) decodeDictObject(stack[activation + FUN_OFFSET], dict);
 					bp = stack[activation + BP_OFFSET];
 
-//					int funObj = load(stack, activation, FUN_OFFSET);
-//					function = (JSObject) decodeAnyValue(funObj, dict, heap); // Restore the correct function
-					//System.err.println(">RET: Restored from FUN_OFFSET: " + decodeAnyValue(funObj, dict, heap));
 					// restore code and instrs
 					code = (Code) function.lookup("__code__");
 					instrs = code.instrs();
 
 					// push return value
 					push(stack, sp++, result);
-
-					// DEBUG
-					// dumpStack("> end ret dump", stack, sp, bp, dict, heap);
-					//System.err.println("8) bp: " + bp + " sp: " + sp + " pc: " + pc);
-					//dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.GOTO -> {
-					//throw new UnsupportedOperationException("TODO GOTO");
 					// get the label
                     // change the program counter to the label
 					pc = instrs[pc];
 				}
 				case Instructions.JUMP_IF_FALSE -> {
-					//throw new UnsupportedOperationException("TODO JUMP_IF_FALSE");
 					// get the label
 					var label = instrs[pc++];
 					// get the value on top of the stack
@@ -330,7 +281,6 @@ public final class StackInterpreter {
 					}
 				}
 				case Instructions.NEW -> {
-					//throw new UnsupportedOperationException("TODO NEW");
 					// get the class from the instructions
 					var vClass = instrs[pc++];
 					var clazz = (JSObject) decodeDictObject(vClass, dict);
@@ -360,7 +310,6 @@ public final class StackInterpreter {
 					}
 
 					var ref = hp;
-
 					// write the class on heap
 					heap[ref] = vClass;
 					// write the empty GC mark
@@ -378,10 +327,8 @@ public final class StackInterpreter {
 					push(stack, sp++, encodeReference(ref));
 				}
 				case Instructions.GET -> {
-					//throw new UnsupportedOperationException("TODO GET");
 					// get field name from the instructions
 					var fieldName = (String) decodeDictObject(instrs[pc++], dict);
-					//System.err.println("FIELLED : " + fieldName );
 					// get reference from the top of the stack
 					int value = pop(stack, --sp);
 					int ref = decodeReference(value);
@@ -404,7 +351,6 @@ public final class StackInterpreter {
 					push(stack, sp++, fieldValue);
 				}
 				case Instructions.PUT -> {
-					//throw new UnsupportedOperationException("TODO PUT");
 					// get field name from the instructions
 					var fieldName = (String) decodeDictObject(instrs[pc++], dict);
 					// get new value from the top of the stack
@@ -420,14 +366,12 @@ public final class StackInterpreter {
 					if (slotOrUndefined == UNDEFINED) {
 						throw new Failure("invalid field " + fieldName);
 					}
-
 					// get the field index
 					var fieldIndex = ref + OBJECT_HEADER_SIZE + (int) slotOrUndefined;
 					// store field value from the top of the stack on heap
 					heap[fieldIndex] = value;
 				}
 				case Instructions.PRINT -> {
-					//throw new UnsupportedOperationException("TODO PRINT");
 					// pop the value on top of the stack
 					var result = pop(stack, --sp);
 					// decode the value

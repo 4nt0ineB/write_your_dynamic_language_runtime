@@ -164,7 +164,6 @@ public final class InstrRewriter {
 				}
 			}
 			case FunCall(Expr qualifier, List<Expr> args, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO FunCall");
 				// visit the qualifier
 				visit(qualifier, env, buffer, dict);
 				// emit undefined
@@ -177,13 +176,7 @@ public final class InstrRewriter {
 				buffer.emit(FUNCALL).emit(args.size());
 			}
 			case LocalVarAccess(String name, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO LocalVarAccess");
 				// get the local variable name
-//				System.err.println(name);
-//				if(Objects.equals(name, "print")) {
-//					buffer.emit(PRINT);
-//					return;
-//				}
 				// find if there is a local variable in the environment with the name
 				var slotOrUndefined = env.lookup(name);
 				if (slotOrUndefined == UNDEFINED) {
@@ -195,7 +188,6 @@ public final class InstrRewriter {
 				}
 			}
 			case LocalVarAssignment(String name, Expr expr, boolean declaration, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO LocalVarAssignment");
 				// visit the expression
 				visit(expr, env, buffer, dict);
 				// find if there is a local variable in the env from the name
@@ -207,7 +199,6 @@ public final class InstrRewriter {
 				buffer.emit(STORE).emit((int) slotOrUndefined);
 			}
 			case Fun(Optional<String> optName, List<String> parameters, Block body, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO Fun");
 				// create a JSObject function
 				var function = createFunction(optName, parameters, body, dict);
 				// emit a const on the function
@@ -219,14 +210,12 @@ public final class InstrRewriter {
 				});
 			}
 			case Return(Expr expr, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO Return");
 				// emit a visit of the expression
 				visit(expr, env, buffer, dict);
 				// emit a RET
 				buffer.emit(RET);
 			}
 			case If(Expr condition, Block trueBlock, Block falseBlock, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO If");
 				// visit the condition
 				visit(condition, env, buffer, dict);
 				// emit a JUMP_IF_FALSE and a placeholder
@@ -243,7 +232,6 @@ public final class InstrRewriter {
 				buffer.patch(endPlaceHolder, buffer.label());
 			}
 			case New(Map<String, Expr> initMap, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO New");
 				// create a JSObject class
 				var clazz = JSObject.newObject(null);
 				// loop over all the field initializations
@@ -254,18 +242,15 @@ public final class InstrRewriter {
 				  visit(expr, env, buffer, dict);
 				});
 				// emit a NEW with the class
-				//buffer.emit(CONST).emit(encodeDictObject(clazz, dict));
 				buffer.emit(NEW).emit(encodeDictObject(clazz, dict));
 			}
 			case FieldAccess(Expr receiver, String name, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO FieldAccess");
 				// visit the receiver
 				visit(receiver, env, buffer, dict);
 				// emit a GET with the field name
 				buffer.emit(GET).emit(encodeDictObject(name, dict));
 			}
 			case FieldAssignment(Expr receiver, String name, Expr expr, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO FieldAssignment");
 				// visit the receiver
 				visit(receiver, env, buffer, dict);
 				// visit the expression
@@ -274,7 +259,6 @@ public final class InstrRewriter {
 				buffer.emit(PUT).emit(encodeDictObject(name, dict));
 			}
 			case MethodCall(Expr receiver, String name, List<Expr> args, int lineNumber) -> {
-				//throw new UnsupportedOperationException("TODO MethodCall");
 				// visit the receiver
 				visit(receiver, env, buffer, dict);
 				// emit a DUP, get the field name and emit a SWAP of the qualifier and the receiver
