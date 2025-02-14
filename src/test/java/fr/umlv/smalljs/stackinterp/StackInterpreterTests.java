@@ -24,7 +24,7 @@ public class StackInterpreterTests {
     return outStream.toString(UTF_8).replace("\r\n", "\n");
   }
 
-  /*
+
   @Tag("Q2") @Test
   public void helloString() {
     assertEquals("", execute("\"hello\"\n"));
@@ -66,7 +66,7 @@ public class StackInterpreterTests {
             var a = 3;
             print(a);
             """));
-  }
+  }/*
   @Tag("Q8") @Test
   public void printSeveralVariables() {
     assertEquals("7\n", execute("""
