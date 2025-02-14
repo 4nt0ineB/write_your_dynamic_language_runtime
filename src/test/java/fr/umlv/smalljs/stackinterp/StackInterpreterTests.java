@@ -66,7 +66,7 @@ public class StackInterpreterTests {
             var a = 3;
             print(a);
             """));
-  }/*
+  }
   @Tag("Q8") @Test
   public void printSeveralVariables() {
     assertEquals("7\n", execute("""
@@ -327,7 +327,7 @@ public class StackInterpreterTests {
                 }
                 print(o);
                 """));
-  }
+  }/*
   @Tag("Q14") @Test
   public void createAnObjectEvaluationOrder() {
     assertEquals(

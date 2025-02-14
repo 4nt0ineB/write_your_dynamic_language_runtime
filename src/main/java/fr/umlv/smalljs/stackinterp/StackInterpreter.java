@@ -112,8 +112,8 @@ public final class StackInterpreter {
 					// lookup the name and push as any anyValue
 					var object = globalEnv.lookup(name);
 					push(stack, sp++, encodeAnyValue(object, dict));
-					System.err.println("2) bp: " + bp + " sp: " + sp + " pc: " + pc);
-					dumpStack(">end const ", stack, sp, bp, dict, heap);
+//					System.err.println("2) bp: " + bp + " sp: " + sp + " pc: " + pc);
+//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.REGISTER -> {
 					//throw new UnsupportedOperationException("TODO REGISTER");
@@ -127,8 +127,8 @@ public final class StackInterpreter {
 					Object value = decodeDictObject(pop(stack, --sp), dict);
 					// register it in the global environment
 					globalEnv.register(name, value);
-					System.err.println("3) bp: " + bp + " sp: " + sp + " pc: " + pc);
-					dumpStack(">end const ", stack, sp, bp, dict, heap);
+//					System.err.println("3) bp: " + bp + " sp: " + sp + " pc: " + pc);
+//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.LOAD -> {
 					//throw new UnsupportedOperationException("TODO LOAD");
@@ -138,8 +138,8 @@ public final class StackInterpreter {
 					int value = load(stack, bp, offset);
 					// push it to the top of the stack
 					push(stack, sp++, value);
-					System.err.println("4) bp: " + bp + " sp: " + sp + " pc: " + pc);
-					dumpStack(">end const ", stack, sp, bp, dict, heap);
+//					System.err.println("4) bp: " + bp + " sp: " + sp + " pc: " + pc);
+//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.STORE -> {
 					//throw new UnsupportedOperationException("TODO STORE");
@@ -228,8 +228,8 @@ public final class StackInterpreter {
 
 					  // push return value
 					  push(stack, sp++, encodeAnyValue(result, dict));
-						System.err.println("5) bp: " + bp + " sp: " + sp + " pc: " + pc);
-						dumpStack(">end const ", stack, sp, bp, dict, heap);
+						// System.err.println("5) bp: " + bp + " sp: " + sp + " pc: " + pc);
+						// dumpStack(">end const ", stack, sp, bp, dict, heap);
 					  continue;
 					}
 
@@ -266,8 +266,8 @@ public final class StackInterpreter {
 
 					// DEBUG
 					//dumpStack(">end funcall dump", stack, sp, bp, dict, heap);
-					System.err.println("6) bp: " + bp + " sp: " + sp + " pc: " + pc);
-					dumpStack(">end const ", stack, sp, bp, dict, heap);
+//					System.err.println("6) bp: " + bp + " sp: " + sp + " pc: " + pc);
+//					dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
 				case Instructions.RET -> {
 					//throw new UnsupportedOperationException("TODO RET");
@@ -335,7 +335,7 @@ public final class StackInterpreter {
 
 					// out of memory ?
 					if (hp + OBJECT_HEADER_SIZE + clazz.length() >= heap.length) {
-						dumpHeap("before GC ", heap, hp, dict);
+//						dumpHeap("before GC ", heap, hp, dict);
 						throw new UnsupportedOperationException("TODO !!! GC !!!");
 						//dumpHeap("after GC ", heap, hp, dict);
 					}
