@@ -14,10 +14,7 @@ import static fr.umlv.smalljs.stackinterp.Instructions.RET;
 import static fr.umlv.smalljs.stackinterp.Instructions.*;
 import static fr.umlv.smalljs.stackinterp.TagValues.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import fr.umlv.smalljs.ast.Expr;
 import fr.umlv.smalljs.ast.Expr.Block;
@@ -163,7 +160,7 @@ public final class InstrRewriter {
 					buffer.emit(CONST).emit(encodeSmallInt((int) literalValue));
 				} else {
 					// emit a dictionary object
-					buffer.emit(CONST).emit(encodeAnyValue(literalValue, dict));
+					buffer.emit(CONST).emit(encodeDictObject(literalValue, dict));
 				}
 			}
 			case FunCall(Expr qualifier, List<Expr> args, int lineNumber) -> {
@@ -182,6 +179,11 @@ public final class InstrRewriter {
 			case LocalVarAccess(String name, int lineNumber) -> {
 				//throw new UnsupportedOperationException("TODO LocalVarAccess");
 				// get the local variable name
+//				System.err.println(name);
+//				if(Objects.equals(name, "print")) {
+//					buffer.emit(PRINT);
+//					return;
+//				}
 				// find if there is a local variable in the environment with the name
 				var slotOrUndefined = env.lookup(name);
 				if (slotOrUndefined == UNDEFINED) {
@@ -247,44 +249,44 @@ public final class InstrRewriter {
 				// loop over all the field initializations
 				initMap.forEach((fieldName, expr) -> {
 				  // register the field name with the right slot
-				  clazz.register(fieldName, expr);
+				  clazz.register(fieldName, clazz.length());
 				   // visit the initialization expression
 				  visit(expr, env, buffer, dict);
 				});
 				// emit a NEW with the class
 				//buffer.emit(CONST).emit(encodeDictObject(clazz, dict));
-				buffer.emit(NEW).emit(encodeAnyValue(clazz, dict));
+				buffer.emit(NEW).emit(encodeDictObject(clazz, dict));
 			}
 			case FieldAccess(Expr receiver, String name, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO FieldAccess");
+				//throw new UnsupportedOperationException("TODO FieldAccess");
 				// visit the receiver
-				//visit(...);
+				visit(receiver, env, buffer, dict);
 				// emit a GET with the field name
-				//buffer.emit(...).emit(...);
+				buffer.emit(GET).emit(encodeDictObject(name, dict));
 			}
 			case FieldAssignment(Expr receiver, String name, Expr expr, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO FieldAssignment");
+				//throw new UnsupportedOperationException("TODO FieldAssignment");
 				// visit the receiver
-				//visit(...);
+				visit(receiver, env, buffer, dict);
 				// visit the expression
-				//visit(...);
+				visit(expr, env, buffer, dict);
 				// emit a PUT with the field name
-				//buffer.emit(...).emit(...);
+				buffer.emit(PUT).emit(encodeDictObject(name, dict));
 			}
 			case MethodCall(Expr receiver, String name, List<Expr> args, int lineNumber) -> {
-				throw new UnsupportedOperationException("TODO MethodCall");
+				//throw new UnsupportedOperationException("TODO MethodCall");
 				// visit the receiver
-				//visit(...);
+				visit(receiver, env, buffer, dict);
 				// emit a DUP, get the field name and emit a SWAP of the qualifier and the receiver
-				//buffer.emit(DUP);
-				//buffer.emit(...).emit(...);
-				//buffer.emit(SWAP);
+				buffer.emit(DUP);
+				buffer.emit(GET).emit(encodeDictObject(name, dict));
+				buffer.emit(SWAP);
 				// visit all arguments
-				//for (var arg : args) {
-				  //visit(...);
-				//}
+				for (var arg : args) {
+				  visit(arg, env, buffer, dict);
+				}
 				// emit the funcall
-				//buffer.emit(...).emit(...);
+				buffer.emit(FUNCALL).emit(args.size());
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package fr.umlv.smalljs.stackinterp;
 
 import static fr.umlv.smalljs.rt.JSObject.UNDEFINED;
 import static fr.umlv.smalljs.stackinterp.TagValues.*;
+import static java.lang.System.exit;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -77,7 +78,7 @@ public final class StackInterpreter {
 
 	public static Object execute(JSObject function, Dictionary dict, JSObject globalEnv) {
 		var stack = new int[96 /* 4096 */];
-		var heap = new int[96 /* 4096 */];
+		var heap = new int[4/*96*/ /* 4096 */];
 		var code = (Code) function.lookup("__code__");
 		var instrs = code.instrs();
 
@@ -99,7 +100,8 @@ public final class StackInterpreter {
 					//throw new UnsupportedOperationException("TODO CONST");
 					// get the constant from the instruction to the stack
 					// push(...)
-					push(stack, sp++, instrs[pc++]);
+					int value = instrs[pc++];
+					push(stack, sp++, value);
 					//System.err.println("1) bp: " + bp + " sp: " + sp + " pc: " + pc);
 					//dumpStack(">end const ", stack, sp, bp, dict, heap);
 				}
@@ -335,9 +337,26 @@ public final class StackInterpreter {
 
 					// out of memory ?
 					if (hp + OBJECT_HEADER_SIZE + clazz.length() >= heap.length) {
-//						dumpHeap("before GC ", heap, hp, dict);
-						throw new UnsupportedOperationException("TODO !!! GC !!!");
-						//dumpHeap("after GC ", heap, hp, dict);
+						var sb = new StringBuilder();
+						sb.append("OutOfMemoryError: Heap is full.\n")
+						  .append("\tat ")
+						  .append(function.getName())
+						  .append("\n");
+						int currentBp = bp;
+						// on remonte la pile pour récupérer le nom des fonctions
+						while (currentBp != 0) {
+							// bp = sp - argCount - 1
+							int activation = currentBp + code.slotCount();
+							int functionIndex = stack[activation + FUN_OFFSET];
+							JSObject currentFunction = (JSObject) decodeDictObject(functionIndex, dict);
+							sb.append("\tat ")
+							  .append(currentFunction.getName())
+							  .append("\n");
+							currentBp = stack[activation + BP_OFFSET];
+						}
+						System.err.println(sb);
+						exit(1);
+						return null;
 					}
 
 					var ref = hp;
