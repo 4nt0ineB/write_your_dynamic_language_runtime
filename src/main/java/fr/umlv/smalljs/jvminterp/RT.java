@@ -48,27 +48,30 @@ public final class RT {
   }
 
   public static CallSite bsm_lookup(Lookup lookup, String name, MethodType type, String functionName) {
-    throw new UnsupportedOperationException("TODO bsm_lookup");
-    //var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
-    //var globalEnv = classLoader.getGlobal();
+    var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
+    var globalEnv = classLoader.getGlobal();
     // get the LOOKUP method handle
+    var mh = RT.LOOKUP;
     // use the global environment as first argument and the functionName as second argument
+    mh = insertArguments(mh, 0, globalEnv, functionName);
     // create a constant callsite
+    return new ConstantCallSite(mh);
   }
 
   public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
-    throw new UnsupportedOperationException("TODO bsm_funcall");
     // get INVOKE method handle
+    var mh = INVOKE;
     // make it accept an Object (not a JSObject) and objects as other parameters
+    mh = mh.asType(type);
     // create a constant callsite
+    return new ConstantCallSite(mh);
   }
 
   public static Object bsm_fun(Lookup lookup, String name, Class<?> type, int funId) {
-    throw new UnsupportedOperationException("TODO bsm_fun");
-    //var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
-    //var globalEnv = classLoader.getGlobal();
-    //var fun = classLoader.getDictionary().lookupAndClear(funId);
-    //return ByteCodeRewriter.createFunction(fun.optName().orElse("lambda"), fun.parameters(), fun.body(), globalEnv);
+    var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
+    var globalEnv = classLoader.getGlobal();
+    var fun = classLoader.getDictionary().lookupAndClear(funId);
+    return ByteCodeRewriter.createFunction(fun.optName().orElse("lambda"), fun.parameters(), fun.body(), globalEnv);
   }
 
   public static CallSite bsm_register(Lookup lookup, String name, MethodType type, String functionName) {
