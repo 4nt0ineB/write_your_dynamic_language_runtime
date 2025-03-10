@@ -59,12 +59,45 @@ public final class RT {
   }
 
   public static CallSite bsm_funcall(Lookup lookup, String name, MethodType type) {
-    // get INVOKE method handle
-    var mh = INVOKE;
-    // make it accept an Object (not a JSObject) and objects as other parameters
-    mh = mh.asType(type);
-    // create a constant callsite
-    return new ConstantCallSite(mh);
+    return new InliningCache(type);
+  }
+
+  private static class InliningCache extends MutableCallSite {
+    private static final MethodHandle SLOW_PATH, TEST;
+    static {
+      var lookup = MethodHandles.lookup();
+      try {
+        SLOW_PATH = lookup.findVirtual(InliningCache.class, "slowPath", methodType(MethodHandle.class, Object.class, Object.class));
+        TEST = lookup.findStatic(InliningCache.class, "test", methodType(boolean.class, Object.class, Object.class));
+      } catch (NoSuchMethodException | IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    public InliningCache(MethodType type) {
+      super(type);
+      setTarget(MethodHandles.foldArguments(MethodHandles.exactInvoker(type), SLOW_PATH.bindTo(this)));
+    }
+
+    private static boolean test(Object receiver, Object previousReceiver) {
+      return receiver == previousReceiver;
+    }
+
+    private MethodHandle slowPath(Object qualifier, Object receiver) {
+      var jsObject = (JSObject)qualifier;
+      var mh = jsObject.getMethodHandle();
+      var varargs = mh.isVarargsCollector();
+
+      mh = dropArguments(mh, 0, Object.class);
+      mh = mh.withVarargs(varargs);
+      mh = mh.asType(type());
+
+      var test = insertArguments(TEST, 1, receiver);
+      var fallback = new InliningCache(type()).dynamicInvoker();
+      var guard = guardWithTest(test, mh, fallback);
+      setTarget(guard);
+      return mh;
+    }
   }
 
   public static Object bsm_fun(Lookup lookup, String name, Class<?> type, int funId) {
@@ -75,12 +108,14 @@ public final class RT {
   }
 
   public static CallSite bsm_register(Lookup lookup, String name, MethodType type, String functionName) {
-    throw new UnsupportedOperationException("TODO bsm_register");
-    //var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
-    //var globalEnv = classLoader.getGlobal();
+    var classLoader = (FunClassLoader) lookup.lookupClass().getClassLoader();
+    var globalEnv = classLoader.getGlobal();
     //get the REGISTER method handle
+    var mh = REGISTER;
     // use the global environment as first argument and the functionName as second argument
+    mh = insertArguments(mh, 0, globalEnv, functionName);
     // create a constant callsite
+    return new ConstantCallSite(mh);
   }
 
   @SuppressWarnings("unused")  // used by a method handle
@@ -88,17 +123,21 @@ public final class RT {
     return o != null && o != UNDEFINED && o != Boolean.FALSE;
   }
   public static CallSite bsm_truth(Lookup lookup, String name, MethodType type) {
-    throw new UnsupportedOperationException("TODO bsm_truth");
     // get the TRUTH method handle
+    var mh = TRUTH;
     // create a constant callsite
+    return new ConstantCallSite(mh);
   }
 
   public static CallSite bsm_get(Lookup lookup, String name, MethodType type, String fieldName) {
-    throw new UnsupportedOperationException("TODO bsm_get");
     // get the LOOKUP method handle
+    var mh = RT.LOOKUP;
     // use the fieldName as second argument
+    mh = insertArguments(mh, 1, fieldName);
     // make it accept an Object (not a JSObject) as first parameter
+    mh = dropArguments(mh, 1, JSObject.class);
     // create a constant callsite
+    return new ConstantCallSite(mh);
   }
 
   public static CallSite bsm_set(Lookup lookup, String name, MethodType type, String fieldName) {

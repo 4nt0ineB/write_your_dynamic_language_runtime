@@ -2,13 +2,7 @@ package fr.umlv.smalljs.jvminterp;
 
 import static java.lang.invoke.MethodType.genericMethodType;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.objectweb.asm.Opcodes.ACC_SUPER;
-import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.ASTORE;
-import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.V21;
+import static org.objectweb.asm.Opcodes.*;
 
 import java.io.PrintWriter;
 import java.lang.invoke.CallSite;
@@ -239,7 +233,10 @@ public final class ByteCodeRewriter {
           // emit a LDC to load the function corresponding to the id at runtime
           mv.visitLdcInsn(new ConstantDynamic("fun", "Ljava/lang/Object;", BSM_FUN, id));
           // generate an invokedynamic doing a register with the function name
-          mv.visitInvokeDynamicInsn(optName.orElse("myfun"), "()Ljava/lang/Object;", BSM_REGISTER);
+          optName.ifPresent(name -> {
+            mv.visitInsn(DUP);
+            mv.visitInvokeDynamicInsn("register", "(Ljava/lang/Object;)V", BSM_REGISTER, name);
+          });
         }
         case Return(Expr expr, int lineNumber) -> {
           // visit the return expression
@@ -248,18 +245,34 @@ public final class ByteCodeRewriter {
           mv.visitInsn(Opcodes.ARETURN);
         }
         case If(Expr condition, Block trueBlock, Block falseBlock, int lineNumber) -> {
-          throw new UnsupportedOperationException("TODO If");
           // visit the condition
+          visit(condition, env, mv, dictionary);
           // generate an invokedynamic to transform an Object to a boolean using BSM_TRUTH
+          mv.visitInvokeDynamicInsn("truth", "(Ljava/lang/Object;)Z", BSM_TRUTH);
+          var elseLabel = new Label();
+          mv.visitJumpInsn(IFEQ, elseLabel);
           // visit the true block
+          visit(trueBlock, env, mv, dictionary);
           // visit the false block
+          var endLabel = new Label();
+          mv.visitJumpInsn(GOTO, endLabel);
+          mv.visitLabel(elseLabel);
+          visit(falseBlock, env, mv, dictionary);
+          mv.visitLabel(endLabel);
         }
         case New(Map<String, Expr> initMap, int lineNumber) -> {
-          throw new UnsupportedOperationException("TODO New");
           // call newObject with an INVOKESTATIC
+          mv.visitMethodInsn(INVOKESTATIC, JSOBJECT, "newObject", "(L" + JSOBJECT + ";)L" + JSOBJECT + ";", false);
           // for each initialization expression
+          for(var entry: initMap.entrySet()) {
             // generate a string with the key
+            var key = entry.getKey();
             // call register on the JSObject
+            mv.visitInsn(DUP);
+            mv.visitLdcInsn(key);
+            visit(entry.getValue(), env, mv, dictionary);
+            mv.visitMethodInsn(INVOKEVIRTUAL, JSOBJECT, "register", "(Ljava/lang/String;Ljava/lang/Object;)V", false);
+          }
         }
         case FieldAccess(Expr receiver, String name, int lineNumber) -> {
           throw new UnsupportedOperationException("TODO FieldAccess");
